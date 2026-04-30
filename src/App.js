@@ -13,11 +13,11 @@ import Login from "./components/Login";
 import { v4 as uuidv4 } from "uuid";
 
 const initialCategories = [
-    { name: "Books", budget: 200 },
-    { name: "Food", budget: 500 },
+    { name: "Books", budget: 100 },
+    { name: "Food", budget: 200 },
     { name: "Rent", budget: 1000 },
-    { name: "Entertainment", budget: 300 },
-    { name: "Utilities", budget: 150 }
+    { name: "Entertainment", budget: 100 },
+    { name: "Utilities", budget: 100 }
 ];
 
 function App() {
@@ -138,105 +138,92 @@ function App() {
     // ---------------- UI ----------------
 
     return (
-        <div style={{ fontFamily: "Arial", minHeight: "100vh", background: "#f5f7fa" }}>
+    <div style={{ fontFamily: "Arial", minHeight: "100vh", background: "#f5f7fa" }}>
 
-            {!user && (
-                <div style={overlayStyle}>
-                    <div style={modalStyle}>
-                        <Login
-                            handleLogin={handleLogin}
-                            handleSignup={handleSignup}
-                        />
-                    </div>
+        {!user && (
+            <div style={overlayStyle}>
+                <div style={modalStyle}>
+                    <Login handleLogin={handleLogin} handleSignup={handleSignup} />
+                </div>
+            </div>
+        )}
+
+        <div style={headerStyle}>
+            <h1 style={{ margin: 0 }}>💰 Budget Dashboard</h1>
+            {user && (
+                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                    <span>Logged in as: <b>{user.name}</b></span>
+                    <button onClick={handleLogout} style={logoutBtn}>Logout</button>
                 </div>
             )}
+        </div>
 
-            <div style={headerStyle}>
-                <h1 style={{ margin: 0 }}>💰 Budget Dashboard</h1>
+        <div style={{ padding: "20px" }}>
 
-                {user && (
-                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                        <span>
-                            Logged in as: <b>{user.name}</b>
-                        </span>
+            {/* TOP ROW: left + middle + right */}
+            <div style={{ display: "flex", gap: "20px", alignItems: "flex-start" }}>
 
-                        <button onClick={handleLogout} style={logoutBtn}>
-                            Logout
-                        </button>
+                {/* LEFT: Calendar, Add Expense, Add Category, Alerts */}
+                <div style={{ flex: "0 0 320px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <CalendarComponent
+                        selectedDate={selectedDate}
+                        setSelectedDate={setSelectedDate}
+                    />
+                    <ExpenseForm
+                        categories={categories}
+                        addExpense={addExpense}
+                        selectedDate={selectedDate}
+                    />
+                    <CategoryForm addCategory={addCategory} />
+                </div>
+
+                {/* Middle: Charts */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <PieChartComponent categoryTotals={categoryTotals} />
+                    <LineChartComponent categoryTotals={categoryTotals} />
+                </div>
+
+                {/* RIGHT: Charts */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div>
+                        <h2>Category Alerts</h2>
+                        {categoryTotals.map(cat => {
+                            const percent = cat.percentUsed;
+                            let daysText = showDays && daysRemaining !== null ? ` — ${daysRemaining} days left` : "";
+                            let message = null;
+                            let color = "";
+
+                            if (percent >= 100) { message = `🚨 OVER BUDGET (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
+                            else if (percent >= 80) { message = `⚠️ WARNING (${percent.toFixed(0)}%)${daysText}`; color = "orange"; }
+                            else if (percent >= 50) { message = `🟡 ON TRACK (${percent.toFixed(0)}%)${daysText}`; color = "green"; }
+
+                            return message ? (
+                                <div key={cat.name} style={{ color }}>{cat.name}: {message}</div>
+                            ) : null;
+                        })}
                     </div>
-                )}
+                    <TransactionList
+                    expenses={expenses}
+                    deleteTransaction={deleteTransaction}
+                    />
+                </div>
             </div>
 
-            <div style={{ padding: "20px" }}>
-
-                <CalendarComponent
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                />
-
-                <ExpenseForm
-                    categories={categories}
-                    addExpense={addExpense}
-                    selectedDate={selectedDate}
-                />
-
-                <CategoryForm addCategory={addCategory} />
-
-                {/* ALERTS */}
-                <h2>Category Alerts</h2>
-
-                {categoryTotals.map(cat => {
-                    const percent = cat.percentUsed;
-
-                    let daysText =
-                        showDays && daysRemaining !== null
-                            ? ` — ${daysRemaining} days left`
-                            : "";
-
-                    let message = null;
-                    let color = "";
-
-                    if (percent >= 100) {
-                        message = `🚨 OVER BUDGET (${percent.toFixed(0)}%)${daysText}`;
-                        color = "red";
-                    }
-                    else if (percent >= 80) {
-                        message = `⚠️ WARNING (${percent.toFixed(0)}%)${daysText}`;
-                        color = "orange";
-                    }
-                    else if (percent >= 50) {
-                        message = `🟡 ON TRACK (${percent.toFixed(0)}%)${daysText}`;
-                        color = "green";
-                    }
-
-                    return message ? (
-                        <div key={cat.name} style={{ color }}>
-                            {cat.name}: {message}
-                        </div>
-                    ) : null;
-                })}
-
+            {/* BOTTOM: Budget Usage + Transactions */}
+            <div style={{ marginTop: "20px" }}>
                 <BudgetProgress
                     categoryTotals={categoryTotals}
                     updateBudget={updateBudget}
                     deleteCategory={deleteCategory}
                 />
-
-                <PieChartComponent categoryTotals={categoryTotals} />
-                <LineChartComponent categoryTotals={categoryTotals} />
-
-                <TransactionList
-                    expenses={expenses}
-                    deleteTransaction={deleteTransaction}
-                />
-
+                
                 <button onClick={resetMonth} style={{ marginTop: "20px" }}>
                     Reset Month
                 </button>
             </div>
         </div>
-    );
-}
+    </div>
+);};
 
 // ---------------- STYLES ----------------
 
