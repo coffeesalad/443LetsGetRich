@@ -31,45 +31,49 @@ function App() {
     //---------------- AUTHENTICATION----------------
 
     const handleLogin = (email, password) => {
-        const storedUser = JSON.parse(localStorage.getItem(email));
+    const storedUser = JSON.parse(localStorage.getItem(email));
 
-        if (storedUser && storedUser.password === password) {
-            setUser(storedUser);
-        } else {
-            alert("Invalid login credentials");
-        }
+    if (storedUser && storedUser.password === password) {
+        setUser(storedUser);
+        // Load this user's expenses
+        const savedExpenses = JSON.parse(localStorage.getItem(`expenses_${email}`)) || [];
+        const parsedExpenses = savedExpenses.map(e => ({ ...e, date: new Date(e.date) }));
+        setExpenses(parsedExpenses);
+    } else {
+        alert("Invalid login credentials");
+    }
     };
 
     const handleSignup = (name, email, password) => {
         const existingUser = localStorage.getItem(email);
-
-        if (existingUser) {
-            alert("Account already exists");
-            return;
-        }
+        if (existingUser) { alert("Account already exists"); return; }
 
         const newUser = { name, email, password };
         localStorage.setItem(email, JSON.stringify(newUser));
         setUser(newUser);
+        setExpenses([]); // fresh start for new user
     };
 
-    const handleLogout = () => setUser(null);
+    const handleLogout = () => {
+    setUser(null);
+    setExpenses([]);
+    };
 
     // ---------------- EXPENSE LOGIC ----------------
 
-    const addExpense = (category, amount) => {
-        const newExpense = {
-            id: uuidv4(),
-            category,
-            amount: parseFloat(amount),
-            date: selectedDate
-        };
-
-        setExpenses([...expenses, newExpense]);
+    const addExpense = (category, amount, note) => {
+    const newExpense = { id: uuidv4(), category, note, amount: parseFloat(amount), date: selectedDate };
+    const updated = [...expenses, newExpense];
+    setExpenses(updated);
+    localStorage.setItem(`expenses_${user.email}`, JSON.stringify(updated));
     };
 
     const deleteTransaction = (id) => {
-        setExpenses(expenses.filter(exp => exp.id !== id));
+    const updated = expenses.filter(exp => exp.id !== id);
+    setExpenses(updated);
+    if (user?.email) {
+        localStorage.setItem(`expenses_${user.email}`, JSON.stringify(updated));
+    }
     };
 
     const addCategory = (name, budget) => {
@@ -92,11 +96,17 @@ function App() {
 
     const resetMonth = () => {
         const m = new Date().getMonth();
+        const updated = expenses.filter(e => new Date(e.date).getMonth() !== m);
         setExpenses(expenses.filter(e => new Date(e.date).getMonth() !== m));
+        if (user?.email) {
+            localStorage.setItem(`expenses_${user.email}`, JSON.stringify(updated));
+        }
     };
 
     // ---------------- DERIVED DATA ----------------
-
+    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalBudget = categories.reduce((sum, c) => sum + Number(c.budget), 0);
+    
     const categoryTotals = categories.map(cat => {
         const totalSpent = expenses
             .filter(e => e.category === cat.name)
@@ -174,17 +184,19 @@ function App() {
                         addExpense={addExpense}
                         selectedDate={selectedDate}
                     />
-                    <CategoryForm addCategory={addCategory} />
+                    <CategoryForm addCategory={addCategory} categories={categories} />
                 </div>
 
                 {/* Middle: Charts */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", flexDirection: "column", gap: "16px" }}>
+                    <h2 style={{ marginBottom: "0px" }}> Total Spent: ${totalSpent.toFixed(2)}</h2>
+                    <h2>Total Budget: ${totalBudget.toFixed(2)}</h2>
                     <PieChartComponent categoryTotals={categoryTotals} />
                     <LineChartComponent categoryTotals={categoryTotals} />
                 </div>
 
                 {/* RIGHT: Charts */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ flex: "0 0 400px", display: "flex", flexDirection: "column", gap: "16px" }}>
                     <div>
                         <h2>Category Alerts</h2>
                         {categoryTotals.map(cat => {
@@ -193,9 +205,12 @@ function App() {
                             let message = null;
                             let color = "";
 
-                            if (percent >= 100) { message = `🚨 OVER BUDGET (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
-                            else if (percent >= 80) { message = `⚠️ WARNING (${percent.toFixed(0)}%)${daysText}`; color = "orange"; }
-                            else if (percent >= 50) { message = `🟡 ON TRACK (${percent.toFixed(0)}%)${daysText}`; color = "green"; }
+                            if (percent > 100) { message = `🚨 Over Budget (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
+                            else if (percent === 100) { message = `🛑 Budget Met ${daysText}`; color = "red"; }
+                            else if (percent >= 80) { message = `⚠️ Approaching Budget (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
+                            else if (percent > 50) { message = `🟠  Over Midpoint (${percent.toFixed(0)}%) ${daysText}`; color = "orange"; }
+                            else if (percent === 50) { message = `🟡 Halfway to Budget ${daysText}`; color = "orange"; }
+                            else if (percent > 0 && percent < 50) { message = `🟢 On Track (${percent.toFixed(0)}%)${daysText}`; color = "green"; }
 
                             return message ? (
                                 <div key={cat.name} style={{ color }}>{cat.name}: {message}</div>
@@ -206,7 +221,10 @@ function App() {
                     expenses={expenses}
                     deleteTransaction={deleteTransaction}
                     />
-                </div>
+                    <button onClick={resetMonth} style={{ marginTop: "20px" }}>
+                    Reset Month
+                    </button>
+                    </div>
             </div>
 
             {/* BOTTOM: Budget Usage + Transactions */}
@@ -216,10 +234,6 @@ function App() {
                     updateBudget={updateBudget}
                     deleteCategory={deleteCategory}
                 />
-                
-                <button onClick={resetMonth} style={{ marginTop: "20px" }}>
-                    Reset Month
-                </button>
             </div>
         </div>
     </div>

@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 
-function CategoryForm({ addCategory }) {
+function CategoryForm({ addCategory, categories }) {
     const [name, setName] = useState("");
     const [budget, setBudget] = useState("");
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!name || !budget) return;
+
+        if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        alert("This category already exists");
+        return;
+        }
 
         addCategory(name, parseFloat(budget));
         setName("");

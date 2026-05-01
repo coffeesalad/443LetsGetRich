@@ -47,7 +47,7 @@ function BudgetProgress({ categoryTotals, updateBudget, deleteCategory }) {
                                     height: "100%",
                                     background:
                                         percent > 85 ? "red" :
-                                            percent > 60 ? "orange" :
+                                            percent > 50 ? "orange" :
                                                 "green"
                                 }}
                             />

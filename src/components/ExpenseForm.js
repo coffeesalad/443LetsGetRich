@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 function ExpenseForm({ categories, addExpense, selectedDate }) {
     const [category, setCategory] = useState(categories[0]?.name || "");
     const [amount, setAmount] = useState("");
+    const [note, setNote] = useState("");
 
     useEffect(() => {
         if (categories.length > 0) {
@@ -15,7 +16,13 @@ function ExpenseForm({ categories, addExpense, selectedDate }) {
 
         if (!amount || !selectedDate) return;
 
-        addExpense(category, amount);
+        if (amount <= 0) {
+        alert("Amount must be greater than 0");
+        return;
+        }
+
+        addExpense(category, amount, note);
+        setNote("");
         setAmount("");
     };
 
@@ -45,7 +52,15 @@ function ExpenseForm({ categories, addExpense, selectedDate }) {
                 type="number"
                 placeholder="Amount"
                 value={amount}
+                min="0"
                 onChange={(e) => setAmount(e.target.value)}
+            />
+            
+            <input
+                type="text"
+                placeholder="Note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
             />
 
             <button type="submit" disabled={!selectedDate}>

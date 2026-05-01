@@ -45,8 +45,9 @@ function TransactionList({ expenses, deleteTransaction }) {
                                     }}
                                 >
                                     <span>
-                                        ${exp.amount.toFixed(2)} on{" "}
-                                        {new Date(exp.date).toDateString()}
+                                        ${exp.amount.toFixed(2)}{" "}
+                                        {exp.note && <div style={{ fontStyle: "italic" }}> {exp.note}</div>}
+                                        Date: {new Date(exp.date).toDateString()}
                                     </span>
 
                                     <button
