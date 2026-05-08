@@ -190,7 +190,7 @@ function App() {
                 {/* Middle: Charts */}
                 <div style={{ flex: 1, display: "flex", alignItems: "center", flexDirection: "column", gap: "16px" }}>
                     <h2 style={{ marginBottom: "0px" }}> Total Spent: ${totalSpent.toFixed(2)}</h2>
-                    <h2>Total Budget: ${totalBudget.toFixed(2)}</h2>
+                    <h2 style={{ marginBottom: "0px" }}>Total Budget: ${totalBudget.toFixed(2)}</h2>
                     <PieChartComponent categoryTotals={categoryTotals} />
                     <LineChartComponent categoryTotals={categoryTotals} />
                 </div>
@@ -207,7 +207,7 @@ function App() {
 
                             if (percent > 100) { message = `🚨 Over Budget (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
                             else if (percent === 100) { message = `🛑 Budget Met ${daysText}`; color = "red"; }
-                            else if (percent >= 80) { message = `⚠️ Approaching Budget (${percent.toFixed(0)}%)${daysText}`; color = "red"; }
+                            else if (percent >= 80) { message = `⚠️ Approaching Budget (${percent.toFixed(0)}%)${daysText}`; color = "redf"; }
                             else if (percent > 50) { message = `🟠  Over Midpoint (${percent.toFixed(0)}%) ${daysText}`; color = "orange"; }
                             else if (percent === 50) { message = `🟡 Halfway to Budget ${daysText}`; color = "orange"; }
                             else if (percent > 0 && percent < 50) { message = `🟢 On Track (${percent.toFixed(0)}%)${daysText}`; color = "green"; }
